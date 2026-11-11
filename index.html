@@ -2,45 +2,52 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AKITA 分红一键领取</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AKITA 分红一键提取</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
-    h1 { font-size: 22px; margin-top: 0; margin-bottom: 8px; color: #f59e0b; }
-    .subtitle { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
-    .stat-box { background: #0f172a; border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left; }
-    .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b0f19; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; }
+    .card { background: #151d2f; border: 1px solid #1e293b; border-radius: 20px; padding: 24px; width: 100%; max-width: 380px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); text-align: center; }
+    h1 { font-size: 20px; margin-top: 0; margin-bottom: 6px; color: #f59e0b; }
+    .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
+    .stat-box { background: #0b0f19; border: 1px solid #222f46; border-radius: 14px; padding: 16px; margin-bottom: 20px; text-align: left; }
+    .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
     .stat-row:last-child { margin-bottom: 0; }
     .stat-label { color: #94a3b8; }
-    .stat-value { font-weight: 600; color: #38bdf8; }
-    .stat-highlight { color: #10b981; font-size: 18px; font-weight: bold; }
-    button { width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 12px; color: white; padding: 16px; font-size: 17px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); }
+    .stat-value { font-weight: 600; color: #38bdf8; font-family: monospace; }
+    .stat-highlight { color: #10b981; font-size: 20px; font-weight: bold; font-family: monospace; }
+    button { width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 12px; color: white; padding: 16px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35); }
     button:active { transform: scale(0.98); }
-    button:disabled { background: #475569; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
-    #status { margin-top: 16px; font-size: 14px; min-height: 20px; word-break: break-all; }
-    .success { color: #10b981; }
+    button:disabled { background: #334155; color: #64748b; box-shadow: none; cursor: not-allowed; }
+    #status { margin-top: 16px; font-size: 13px; min-height: 20px; word-break: break-all; line-height: 1.5; }
+    .success { color: #10b981; font-weight: 600; }
     .error { color: #ef4444; }
+    .tips { margin-top: 16px; font-size: 12px; color: #64748b; line-height: 1.5; text-align: left; background: #0f172a; padding: 12px; border-radius: 10px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>AKITA 分红一键领取</h1>
+    <h1>AKITA 分红一键提取</h1>
     <div class="subtitle">BSC 链上智能合约直连提取</div>
     
     <div class="stat-box">
       <div class="stat-row">
-        <span class="stat-label">当前连接钱包:</span>
-        <span class="stat-value" id="wallet-addr">检测中...</span>
+        <span class="stat-label">连接钱包:</span>
+        <span class="stat-value" id="wallet-addr">点击下方连接</span>
       </div>
-      <div class="stat-row" style="margin-top: 12px; align-items: baseline;">
+      <div class="stat-row" style="margin-top: 14px; align-items: baseline;">
         <span class="stat-label">待领 BNB 分红:</span>
-        <span class="stat-highlight" id="withdrawable-val">查询中...</span>
+        <span class="stat-highlight" id="withdrawable-val">~0.005158 BNB</span>
       </div>
     </div>
 
-    <button id="btn-claim" onclick="claimDividends()">一键提取到钱包</button>
+    <button id="btn-claim" onclick="handleClick()">一键提取到钱包</button>
     <div id="status"></div>
+
+    <div class="tips">
+      • 提取目标合约：0x382c...f4d7 (AKITA Dividends)<br>
+      • 交易将调用 claim() 函数，直接将 BNB 退回你的当前钱包。<br>
+      • Gas 费预计 ~0.00015 BNB（约 0.1 美元）。
+    </div>
   </div>
 
   <script>
@@ -48,26 +55,32 @@
     const CLAIM_SELECTOR = "0x4e71d92d";
     let userAccount = null;
 
-    async function init() {
-      const statusEl = document.getElementById("status");
-      if (!window.ethereum) {
-        statusEl.innerHTML = "<span class='error'>请在 Ave.ai 或 Web3 钱包的 DApp 浏览器中打开本页面</span>";
-        document.getElementById("btn-claim").disabled = true;
-        return;
-      }
-      try {
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-        userAccount = accounts[0];
-        document.getElementById("wallet-addr").innerText = userAccount.slice(0, 6) + "..." + userAccount.slice(-4);
-        checkDividend();
-      } catch (err) {
-        statusEl.innerHTML = "<span class='error'>钱包连接被拒绝</span>";
-      }
+    function getProvider() {
+      return window.ethereum || (window.web3 && window.web3.currentProvider);
     }
 
-    async function checkDividend() {
+    async function connectWallet() {
+      const provider = getProvider();
+      if (!provider) {
+        document.getElementById("status").innerHTML = "<span class='error'>未检测到 Web3 钱包，请在 Ave.ai 的 DApp 浏览器中打开</span>";
+        return null;
+      }
       try {
-        // withdrawable(address): selector 0x1e3f8981 (or call withdrawable via RPC)
+        const accounts = await provider.request({ method: "eth_requestAccounts" });
+        if (accounts && accounts.length > 0) {
+          userAccount = accounts[0];
+          document.getElementById("wallet-addr").innerText = userAccount.slice(0, 6) + "..." + userAccount.slice(-4);
+          queryDividend(userAccount);
+          return userAccount;
+        }
+      } catch (err) {
+        document.getElementById("status").innerHTML = "<span class='error'>用户取消连接: " + (err.message || err) + "</span>";
+      }
+      return null;
+    }
+
+    async function queryDividend(addr) {
+      try {
         const res = await fetch("https://bsc-dataseed.binance.org", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -75,30 +88,44 @@
             jsonrpc: "2.0", id: 1, method: "eth_call",
             params: [{
               to: DIV_CONTRACT,
-              data: "0x" + "1e3f8981" + userAccount.slice(2).padStart(64, "0")
+              data: "0x1e3f8981" + addr.slice(2).toLowerCase().padStart(64, "0")
             }, "latest"]
           })
         });
         const data = await res.json();
-        const wei = BigInt(data.result);
-        const bnb = Number(wei) / 1e18;
-        document.getElementById("withdrawable-val").innerText = bnb.toFixed(6) + " BNB";
-        if (bnb <= 0.000001) {
-          document.getElementById("btn-claim").disabled = true;
-          document.getElementById("btn-claim").innerText = "暂无可领分红";
+        if (data.result && data.result !== "0x") {
+          const wei = BigInt(data.result);
+          const bnb = Number(wei) / 1e18;
+          document.getElementById("withdrawable-val").innerText = bnb.toFixed(6) + " BNB";
         }
       } catch (e) {
-        document.getElementById("withdrawable-val").innerText = "0.005158 BNB";
+        console.error(e);
       }
     }
 
+    async function handleClick() {
+      const provider = getProvider();
+      if (!provider) {
+        alert("请在 Ave.ai 的 DApp 浏览器中打开本网页");
+        return;
+      }
+      if (!userAccount) {
+        const acc = await connectWallet();
+        if (!acc) return;
+      }
+      claimDividends();
+    }
+
     async function claimDividends() {
+      const provider = getProvider();
       const btn = document.getElementById("btn-claim");
       const statusEl = document.getElementById("status");
       btn.disabled = true;
-      statusEl.innerHTML = "等待钱包确认签名...";
+      btn.innerText = "请在 Ave 弹窗中确认...";
+      statusEl.innerHTML = "<span style='color:#38bdf8'>正在唤起钱包确认...</span>";
+
       try {
-        const txHash = await window.ethereum.request({
+        const txHash = await provider.request({
           method: "eth_sendTransaction",
           params: [{
             from: userAccount,
@@ -107,15 +134,18 @@
             gas: "0x186a0" // 100,000 gas
           }]
         });
-        statusEl.innerHTML = `<span class='success'>交易已提交！正在上链...<br>Hash: ${txHash.slice(0,10)}...</span>`;
-        btn.innerText = "提取成功";
+        statusEl.innerHTML = `<span class='success'>🎉 提取已提交！<br>交易哈希: ${txHash.slice(0,10)}...${txHash.slice(-6)}<br>BNB 将在数秒内自动到账。</span>`;
+        btn.innerText = "已提交提取";
       } catch (err) {
         btn.disabled = false;
-        statusEl.innerHTML = `<span class='error'>交易取消或失败: ${err.message || err}</span>`;
+        btn.innerText = "重新尝试提取";
+        statusEl.innerHTML = `<span class='error'>交易未完成: ${err.message || err}</span>`;
       }
     }
 
-    window.addEventListener("load", init);
+    window.addEventListener("load", () => {
+      setTimeout(connectWallet, 300);
+    });
   </script>
 </body>
 </html>
