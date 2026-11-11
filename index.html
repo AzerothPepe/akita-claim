@@ -14,7 +14,7 @@
     .stat-row:last-child { margin-bottom: 0; }
     .stat-label { color: #94a3b8; }
     .stat-value { font-weight: 600; color: #38bdf8; font-family: monospace; }
-    .stat-highlight { color: #10b981; font-size: 20px; font-weight: bold; font-family: monospace; }
+    .stat-highlight { color: #10b981; font-size: 18px; font-weight: bold; font-family: monospace; }
     button { width: 100%; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 12px; color: white; padding: 16px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35); }
     button:active { transform: scale(0.98); }
     button:disabled { background: #334155; color: #64748b; box-shadow: none; cursor: not-allowed; }
@@ -32,11 +32,15 @@
     <div class="stat-box">
       <div class="stat-row">
         <span class="stat-label">连接钱包:</span>
-        <span class="stat-value" id="wallet-addr">点击下方连接</span>
+        <span class="stat-value" id="wallet-addr">检测中...</span>
       </div>
       <div class="stat-row" style="margin-top: 14px; align-items: baseline;">
         <span class="stat-label">待领 BNB 分红:</span>
-        <span class="stat-highlight" id="withdrawable-val">~0.005158 BNB</span>
+        <span class="stat-highlight" id="withdrawable-val">读取中...</span>
+      </div>
+      <div class="stat-row" style="margin-top: 10px;">
+        <span class="stat-label">历史已领取:</span>
+        <span class="stat-value" id="withdrawn-val" style="color:#94a3b8">--</span>
       </div>
     </div>
 
@@ -53,6 +57,8 @@
   <script>
     const DIV_CONTRACT = "0x382cd205c2974d4bcf8f025df2c8bb43cdc4f4d7";
     const CLAIM_SELECTOR = "0x4e71d92d";
+    const WITHDRAWABLE_SEL = "0xce513b6f";
+    const WITHDRAWN_SEL = "0xbf2d43fc";
     let userAccount = null;
 
     function getProvider() {
@@ -63,6 +69,8 @@
       const provider = getProvider();
       if (!provider) {
         document.getElementById("status").innerHTML = "<span class='error'>未检测到 Web3 钱包，请在 Ave.ai 的 DApp 浏览器中打开</span>";
+        document.getElementById("wallet-addr").innerText = "未连接";
+        document.getElementById("withdrawable-val").innerText = "--";
         return null;
       }
       try {
@@ -74,29 +82,48 @@
           return userAccount;
         }
       } catch (err) {
-        document.getElementById("status").innerHTML = "<span class='error'>用户取消连接: " + (err.message || err) + "</span>";
+        document.getElementById("status").innerHTML = "<span class='error'>钱包连接被拒绝: " + (err.message || err) + "</span>";
       }
       return null;
     }
 
     async function queryDividend(addr) {
       try {
-        const res = await fetch("https://bsc-dataseed.binance.org", {
+        const addrPadded = addr.slice(2).toLowerCase().padStart(64, "0");
+        // 1. withdrawable
+        const resW = await fetch("https://bsc-dataseed.binance.org", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             jsonrpc: "2.0", id: 1, method: "eth_call",
-            params: [{
-              to: DIV_CONTRACT,
-              data: "0x1e3f8981" + addr.slice(2).toLowerCase().padStart(64, "0")
-            }, "latest"]
+            params: [{ to: DIV_CONTRACT, data: WITHDRAWABLE_SEL + addrPadded }, "latest"]
           })
         });
-        const data = await res.json();
-        if (data.result && data.result !== "0x") {
-          const wei = BigInt(data.result);
-          const bnb = Number(wei) / 1e18;
-          document.getElementById("withdrawable-val").innerText = bnb.toFixed(6) + " BNB";
+        const dataW = await resW.json();
+        const bnbW = Number(BigInt(dataW.result || "0x0")) / 1e18;
+        
+        // 2. withdrawn
+        const resD = await fetch("https://bsc-dataseed.binance.org", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0", id: 1, method: "eth_call",
+            params: [{ to: DIV_CONTRACT, data: WITHDRAWN_SEL + addrPadded }, "latest"]
+          })
+        });
+        const dataD = await resD.json();
+        const bnbD = Number(BigInt(dataD.result || "0x0")) / 1e18;
+
+        document.getElementById("withdrawable-val").innerText = bnbW.toFixed(6) + " BNB";
+        document.getElementById("withdrawn-val").innerText = bnbD.toFixed(6) + " BNB";
+
+        const btn = document.getElementById("btn-claim");
+        if (bnbW <= 0.000001) {
+          btn.disabled = true;
+          btn.innerText = bnbD > 0 ? "已全部提取完毕" : "暂无可领分红";
+        } else {
+          btn.disabled = false;
+          btn.innerText = "一键提取到钱包";
         }
       } catch (e) {
         console.error(e);
@@ -136,6 +163,7 @@
         });
         statusEl.innerHTML = `<span class='success'>🎉 提取已提交！<br>交易哈希: ${txHash.slice(0,10)}...${txHash.slice(-6)}<br>BNB 将在数秒内自动到账。</span>`;
         btn.innerText = "已提交提取";
+        setTimeout(() => queryDividend(userAccount), 3000);
       } catch (err) {
         btn.disabled = false;
         btn.innerText = "重新尝试提取";
