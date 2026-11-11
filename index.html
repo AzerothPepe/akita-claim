@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>AKITA 分红一键提取</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b0f19; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 16px; box-sizing: border-box; }
@@ -32,11 +35,11 @@
     <div class="stat-box">
       <div class="stat-row">
         <span class="stat-label">连接钱包:</span>
-        <span class="stat-value" id="wallet-addr">检测中...</span>
+        <span class="stat-value" id="wallet-addr">未连接</span>
       </div>
       <div class="stat-row" style="margin-top: 14px; align-items: baseline;">
         <span class="stat-label">待领 BNB 分红:</span>
-        <span class="stat-highlight" id="withdrawable-val">读取中...</span>
+        <span class="stat-highlight" id="withdrawable-val">--</span>
       </div>
       <div class="stat-row" style="margin-top: 10px;">
         <span class="stat-label">历史已领取:</span>
@@ -44,7 +47,7 @@
       </div>
     </div>
 
-    <button id="btn-claim" onclick="handleClick()">一键提取到钱包</button>
+    <button id="btn-claim" onclick="handleClick()">连接钱包并提取</button>
     <div id="status"></div>
 
     <div class="tips">
@@ -78,6 +81,7 @@
         if (accounts && accounts.length > 0) {
           userAccount = accounts[0];
           document.getElementById("wallet-addr").innerText = userAccount.slice(0, 6) + "..." + userAccount.slice(-4);
+          document.getElementById("withdrawable-val").innerText = "读取中...";
           queryDividend(userAccount);
           return userAccount;
         }
